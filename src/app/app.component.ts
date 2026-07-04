@@ -86,66 +86,6 @@ export class AppComponent implements OnInit, AfterViewInit {
       lumpSumLabel: 'One-time Deposit Today',
       taxLabel: 'Retirement Income Tax',
       corpusLabel: '401(k) / IRA Portfolio'
-    },
-    {
-      name: 'Canada',
-      locale: 'en-CA',
-      currency: 'CAD',
-      symbol: '$',
-      defaultInflation: 2.0,
-      defaultTax: 20,
-      defaultReturnPre: 7.5,
-      defaultReturnPost: 4.5,
-      sipLabel: 'Monthly RRSP / TFSA Saving',
-      stepUpLabel: 'Annual Savings Increase (%)',
-      lumpSumLabel: 'One-time Deposit Today',
-      taxLabel: 'Retirement Income Tax',
-      corpusLabel: 'RRSP / TFSA Portfolio'
-    },
-    {
-      name: 'United Kingdom',
-      locale: 'en-GB',
-      currency: 'GBP',
-      symbol: '£',
-      defaultInflation: 2.0,
-      defaultTax: 15,
-      defaultReturnPre: 7.5,
-      defaultReturnPost: 4.5,
-      sipLabel: 'Monthly Pension Saving',
-      stepUpLabel: 'Annual Savings Increase (%)',
-      lumpSumLabel: 'One-time Deposit Today',
-      taxLabel: 'Retirement Pension Tax',
-      corpusLabel: 'Pension Portfolio'
-    },
-    {
-      name: 'Europe (Germany)',
-      locale: 'de-DE',
-      currency: 'EUR',
-      symbol: '€',
-      defaultInflation: 2.0,
-      defaultTax: 25,
-      defaultReturnPre: 7.0,
-      defaultReturnPost: 4.0,
-      sipLabel: 'Monthly Savings Plan',
-      stepUpLabel: 'Annual Savings Increase (%)',
-      lumpSumLabel: 'One-time Deposit Today',
-      taxLabel: 'Retirement Income Tax',
-      corpusLabel: 'Retirement Capital'
-    },
-    {
-      name: 'Australia',
-      locale: 'en-AU',
-      currency: 'AUD',
-      symbol: '$',
-      defaultInflation: 2.5,
-      defaultTax: 15,
-      defaultReturnPre: 8.0,
-      defaultReturnPost: 5.0,
-      sipLabel: 'Monthly Super Saving',
-      stepUpLabel: 'Annual Savings Increase (%)',
-      lumpSumLabel: 'One-time Deposit Today',
-      taxLabel: 'Superannuation Pension Tax',
-      corpusLabel: 'Superannuation Fund'
     }
   ];
 
