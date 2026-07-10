@@ -22,7 +22,7 @@
       <span class="card-label">{{ currentCountry.corpusLabel }} Goal <span class="hover-info-badge">ℹ️</span></span>
       <h2 class="card-value" [title]="formatINR(targetCorpus)">{{ formatINRShort(targetCorpus) }}</h2>
       <div class="card-footer">
-        <span>Includes <strong>{{ emergencyBufferMonths }}m</strong> buffer & <strong>{{ retirementTax }}%</strong> tax</span>
+        <span>Includes <strong>{{ emergencyBufferMonths }}m</strong> buffer & <strong>{{ retirementTax }}%</strong> tax (Est. total tax: <strong>{{ formatINRShort(totalTaxesPaid) }}</strong>)</span>
       </div>
     </div>
 
@@ -332,12 +332,12 @@
             
             @if (shortfallOrSurplus < 0) {
               <p class="analysis-warning">
-                ⚠️ **Corpus Shortfall**: You face a deficit of <strong>{{ formatINR(Math.abs(shortfallOrSurplus)) }}</strong> against your realistic target corpus of <strong>{{ formatINR(targetCorpus) }}</strong> (which includes a <strong>{{ emergencyBufferMonths }}-month emergency buffer</strong> and accounts for <strong>{{ retirementTax }}% withdrawal tax</strong>). 
+                ⚠️ **Corpus Shortfall**: You face a deficit of <strong>{{ formatINR(Math.abs(shortfallOrSurplus)) }}</strong> against your realistic target corpus of <strong>{{ formatINR(targetCorpus) }}</strong> (which includes a <strong>{{ emergencyBufferMonths }}-month emergency buffer</strong> and accounts for <strong>{{ retirementTax }}% withdrawal tax</strong>, projected to cost you <strong>{{ formatINR(totalTaxesPaid) }}</strong> in lifetime taxes). 
                 To bridge this gap, consider raising your monthly savings rate to <strong>{{ formatINR(requiredSIP) }}</strong> (with step-up) or investing an additional lump sum of <strong>{{ formatINR(requiredOneTime) }}</strong> today.
               </p>
             } @else {
               <p class="analysis-success">
-                🎉 **Goal Achieved**: Your investments will exceed the required target corpus of <strong>{{ formatINR(targetCorpus) }}</strong>, leaving you with a surplus of <strong>{{ formatINR(shortfallOrSurplus) }}</strong> at retirement.
+                🎉 **Goal Achieved**: Your investments will exceed the required target corpus of <strong>{{ formatINR(targetCorpus) }}</strong>, leaving you with a surplus of <strong>{{ formatINR(shortfallOrSurplus) }}</strong> at retirement (after accounting for <strong>{{ formatINR(totalTaxesPaid) }}</strong> in lifetime retirement taxes).
               </p>
             }
 
@@ -362,11 +362,21 @@
               </div>
             </div>
 
-            <!-- Doughnut Chart: Contributions vs Growth -->
-            <div class="chart-container doughnut-chart-card">
-              <h4>Wealth Breakdown (Accumulation Phase)</h4>
-              <div class="canvas-wrapper">
-                <canvas #contribChartCanvas></canvas>
+            <div class="doughnut-charts-grid">
+              <!-- Doughnut Chart 1: Contributions vs Growth -->
+              <div class="chart-container doughnut-chart-card">
+                <h4>Wealth Breakdown (Accumulation Phase)</h4>
+                <div class="canvas-wrapper">
+                  <canvas #contribChartCanvas></canvas>
+                </div>
+              </div>
+
+              <!-- Doughnut Chart 2: Retirement Fund Allocation -->
+              <div class="chart-container doughnut-chart-card">
+                <h4>Retirement Fund Allocation</h4>
+                <div class="canvas-wrapper">
+                  <canvas #retirementChartCanvas></canvas>
+                </div>
               </div>
             </div>
           </div>
@@ -392,7 +402,9 @@
                     <th class="text-right" title="Formula:&#10;Equal to the previous year's Closing Balance (or Current Savings + Lump Sum today for Year 0)">Opening Bal ℹ️</th>
                     <th class="text-right" title="Formula (Accumulation Phase only):&#10;Annual savings deposits (escalating annually) + any Ad-hoc lumpsum deposits.&#10;• Retirement Phase: 0 (No savings)">Contributions ℹ️</th>
                     <th class="text-right" title="Formula:&#10;Compounded monthly growth earned on balance.&#10;• Accumulation Phase: pre-retirement expected return rate&#10;• Retirement Phase: post-retirement expected return rate">Growth (Return) ℹ️</th>
-                    <th class="text-right" title="Formula (Retirement Phase only):&#10;Annual expenses grossed up to cover withdrawal taxes, compounding annually at Inflation Rate.&#10;• Accumulation Phase: 0">Withdrawals ℹ️</th>
+                    <th class="text-right" title="Formula (Retirement Phase only):&#10;Annual expenses grossed up to cover withdrawal taxes, compounding annually at Inflation Rate.&#10;• Accumulation Phase: 0">Gross Withdrawal ℹ️</th>
+                    <th class="text-right" title="Formula (Retirement Phase only):&#10;Tax paid on withdrawals at retirement tax rate.&#10;• Accumulation Phase: 0">Taxes Paid ℹ️</th>
+                    <th class="text-right" title="Formula (Retirement Phase only):&#10;Net cash payout you receive to spend (Gross Withdrawal - Taxes Paid).&#10;• Accumulation Phase: 0">Net Payout ℹ️</th>
                     <th class="text-right" title="Formula:&#10;Closing Balance = Opening Balance + Contributions + Growth - Withdrawals">Closing Bal ℹ️</th>
                   </tr>
                 </thead>
@@ -413,7 +425,9 @@
                       <td class="text-right font-mono" title="Formula:&#10;Equal to the previous year's Closing Balance">{{ formatINR(row.openingBalance) }}</td>
                       <td class="text-right font-mono text-indigo" title="Formula (Accumulation Phase only):&#10;Savings contributions + Ad-hoc lump sums in this year">{{ row.contributions > 0 ? formatINR(row.contributions) : '—' }}</td>
                       <td class="text-right font-mono text-emerald" title="Formula:&#10;Compounded monthly growth earned on balance">{{ row.growth > 0 ? formatINR(row.growth) : '—' }}</td>
-                      <td class="text-right font-mono text-rose" title="Formula (Retirement Phase only):&#10;Inflation-adjusted annual expense grossed up for tax">{{ row.withdrawals > 0 ? formatINR(row.withdrawals) : '—' }}</td>
+                      <td class="text-right font-mono text-rose" title="Formula (Retirement Phase only):&#10;Annual expenses grossed up to cover withdrawal taxes, compounding annually at Inflation Rate">{{ row.withdrawals > 0 ? formatINR(row.withdrawals) : '—' }}</td>
+                      <td class="text-right font-mono text-amber" title="Formula (Retirement Phase only):&#10;Tax paid on withdrawals">{{ row.taxPaid > 0 ? formatINR(row.taxPaid) : '—' }}</td>
+                      <td class="text-right font-mono text-emerald" title="Formula (Retirement Phase only):&#10;Net cash payout you receive to spend">{{ row.netWithdrawals > 0 ? formatINR(row.netWithdrawals) : '—' }}</td>
                       <td class="text-right font-mono font-bold" title="Formula:&#10;Closing Balance = Opening Balance + Contributions + Growth - Withdrawals">{{ formatINR(row.closingBalance) }}</td>
                     </tr>
                   }

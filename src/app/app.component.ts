@@ -17,6 +17,8 @@ interface LedgerRow {
   contributions: number;
   growth: number;
   withdrawals: number;
+  taxPaid: number;
+  netWithdrawals: number;
   closingBalance: number;
 }
 
@@ -102,6 +104,8 @@ export class AppComponent implements OnInit, AfterViewInit {
   timeToReachCorpus: string = '';
   totalInvested: number = 0;
   investmentGrowth: number = 0;
+  totalTaxesPaid: number = 0;
+  totalNetWithdrawals: number = 0;
 
   // View state
   activeTab: 'charts' | 'ledger' | 'guide' = 'charts';
@@ -111,9 +115,11 @@ export class AppComponent implements OnInit, AfterViewInit {
   // Chart References
   @ViewChild('corpusChartCanvas', { static: false }) corpusChartCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('contribChartCanvas', { static: false }) contribChartCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('retirementChartCanvas', { static: false }) retirementChartCanvas!: ElementRef<HTMLCanvasElement>;
 
   private corpusChart: Chart | null = null;
   private contribChart: Chart | null = null;
+  private retirementChart: Chart | null = null;
   private chartsInitialized: boolean = false;
 
   ngOnInit() {
@@ -184,6 +190,8 @@ export class AppComponent implements OnInit, AfterViewInit {
       contributions: currentCorpusSafe + oneTimeInvestmentSafe,
       growth: 0,
       withdrawals: 0,
+      taxPaid: 0,
+      netWithdrawals: 0,
       closingBalance: balance
     });
     ages.push(cAge);
@@ -228,6 +236,8 @@ export class AppComponent implements OnInit, AfterViewInit {
         contributions: contributionsThisYear,
         growth: growthThisYear,
         withdrawals: 0,
+        taxPaid: 0,
+        netWithdrawals: 0,
         closingBalance: balance
       });
 
@@ -248,6 +258,9 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     // Decumulation / Retirement simulation
     let retiredBalance = this.projectedCorpus;
+    this.totalTaxesPaid = 0;
+    this.totalNetWithdrawals = 0;
+
     for (let y = 1; y <= nRet; y++) {
       const yearAge = rAge + y;
       const openingBalance = retiredBalance;
@@ -275,6 +288,11 @@ export class AppComponent implements OnInit, AfterViewInit {
         growthThisYear += interest;
       }
 
+      const taxPaidThisYear = withdrawalsThisYear * (retirementTaxSafe / 100);
+      const netWithdrawalsThisYear = withdrawalsThisYear * (1 - retirementTaxSafe / 100);
+      this.totalTaxesPaid += taxPaidThisYear;
+      this.totalNetWithdrawals += netWithdrawalsThisYear;
+
       this.ledger.push({
         year: nAcc + y,
         age: yearAge,
@@ -282,6 +300,8 @@ export class AppComponent implements OnInit, AfterViewInit {
         contributions: 0,
         growth: growthThisYear,
         withdrawals: withdrawalsThisYear,
+        taxPaid: taxPaidThisYear,
+        netWithdrawals: netWithdrawalsThisYear,
         closingBalance: retiredBalance
       });
 
@@ -596,6 +616,55 @@ export class AppComponent implements OnInit, AfterViewInit {
                 label: (context) => {
                   const val = context.raw as number;
                   const total = this.totalInvested + this.investmentGrowth;
+                  const percent = total > 0 ? ((val / total) * 100).toFixed(1) : '0';
+                  return ` ${context.label}: ${this.formatINR(val)} (${percent}%)`;
+                }
+              }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+    }
+
+    // 3. Retirement Fund Allocation (Doughnut Chart)
+    const ctxRetirement = this.retirementChartCanvas?.nativeElement?.getContext('2d');
+    if (ctxRetirement) {
+      if (this.retirementChart) {
+        this.retirementChart.destroy();
+      }
+
+      this.retirementChart = new Chart(ctxRetirement, {
+        type: 'doughnut',
+        data: {
+          labels: ['Net Payout (Expenses)', 'Retirement Taxes Paid', 'Remaining Estate'],
+          datasets: [
+            {
+              data: [this.totalNetWithdrawals, this.totalTaxesPaid, this.inheritance],
+              backgroundColor: ['#10b981', '#f59e0b', '#6366f1'],
+              borderColor: '#151c2c',
+              borderWidth: 2,
+              hoverOffset: 4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: '#94a3b8',
+                font: { family: 'Plus Jakarta Sans', size: 12 },
+                padding: 15
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const val = context.raw as number;
+                  const total = this.totalNetWithdrawals + this.totalTaxesPaid + this.inheritance;
                   const percent = total > 0 ? ((val / total) * 100).toFixed(1) : '0';
                   return ` ${context.label}: ${this.formatINR(val)} (${percent}%)`;
                 }
