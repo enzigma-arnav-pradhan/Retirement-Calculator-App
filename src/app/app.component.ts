@@ -121,9 +121,24 @@ export class AppComponent implements OnInit, AfterViewInit {
   private contribChart: Chart | null = null;
   private retirementChart: Chart | null = null;
   private chartsInitialized: boolean = false;
+  showCookiePopup: boolean = false;
 
   ngOnInit() {
     this.calculate();
+    const consent = localStorage.getItem('cookie_consent_accepted');
+    if (!consent) {
+      this.showCookiePopup = true;
+    }
+  }
+
+  acceptCookies() {
+    localStorage.setItem('cookie_consent_accepted', 'true');
+    this.showCookiePopup = false;
+  }
+
+  declineCookies() {
+    localStorage.setItem('cookie_consent_accepted', 'false');
+    this.showCookiePopup = false;
   }
 
   ngAfterViewInit() {
@@ -261,6 +276,9 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.totalTaxesPaid = 0;
     this.totalNetWithdrawals = 0;
 
+    // SWR-based initial annual withdrawal calculated from the projected corpus at retirement
+    const initialAnnualWithdrawalGross = this.projectedCorpus * (withdrawalRateSafe / 100);
+
     for (let y = 1; y <= nRet; y++) {
       const yearAge = rAge + y;
       const openingBalance = retiredBalance;
@@ -268,9 +286,10 @@ export class AppComponent implements OnInit, AfterViewInit {
       let withdrawalsThisYear = 0;
 
       const rMonthlyRet = expectedReturnPostSafe / 1200;
-      // Inflate the net expense to this retirement year and gross up for tax
-      const monthlyExpenseThisYearNet = monthlyExpenseAtRetirementNet * Math.pow(1 + inflationRateSafe / 100, y - 1);
-      const monthlyWithdrawalNeeded = monthlyExpenseThisYearNet / (1 - retirementTaxSafe / 100);
+      
+      // SWR annual withdrawal inflated to the current retirement year
+      const annualWithdrawalThisYear = initialAnnualWithdrawalGross * Math.pow(1 + inflationRateSafe / 100, y - 1);
+      const monthlyWithdrawalNeeded = annualWithdrawalThisYear / 12;
 
       for (let m = 1; m <= 12; m++) {
         if (retiredBalance > 0) {

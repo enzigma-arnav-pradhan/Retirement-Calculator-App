@@ -520,4 +520,20 @@
       }
     </section>
   </main>
+  <!-- Cookie Consent Pop-up -->
+  @if (showCookiePopup) {
+    <div class="cookie-popup">
+      <div class="cookie-content">
+        <div class="cookie-header">
+          <span class="cookie-icon">🍪</span>
+          <h4>We Value Your Privacy</h4>
+        </div>
+        <p class="cookie-desc">We use cookies to save your settings, analyze retirement tool usage, and personalize wealth projections. Accept to continue with optimized calculations.</p>
+        <div class="cookie-actions">
+          <button class="cookie-btn cookie-decline" (click)="declineCookies()">Decline</button>
+          <button class="cookie-btn cookie-accept" (click)="acceptCookies()">Accept All</button>
+        </div>
+      </div>
+    </div>
+  }
 </div>
