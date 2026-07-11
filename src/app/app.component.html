@@ -1,537 +1,461 @@
-<div class="dashboard-wrapper">
-  <!-- Header -->
-  <header class="app-header">
-    <div class="logo-area">
-      <div class="logo-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-        </svg>
-      </div>
-      <div>
-        <h1>Retirement Planner</h1>
-        <p>Interactive simulations, safe withdrawal planning, and visual analytics</p>
-      </div>
-    </div>
-  </header>
-
-  <!-- KPI Cards Grid -->
-  <section class="kpi-grid">
-    <!-- Card 1: Target Corpus -->
-    <div class="kpi-card card-target" title="Target Corpus Formula:&#10;Target Corpus = [SWR Target] + [Emergency Buffer]&#10;&#10;• SWR Target = [Annual Retirement Expense] / [Safe Withdrawal Rate %]&#10;• Annual Retirement Expense = [Today's Expense] * (1 + Inflation)^Years * 12 / (1 - Tax Rate %)&#10;• Emergency Buffer = [Monthly Retirement Expense] * [Emergency Buffer Months]&#10;&#10;(Hover over any column in the ledger table to see year-on-year formulas)">
-      <div class="card-glow"></div>
-      <span class="card-label">{{ currentCountry.corpusLabel }} Goal <span class="hover-info-badge">ℹ️</span></span>
-      <h2 class="card-value" [title]="formatINR(targetCorpus)">{{ formatINRShort(targetCorpus) }}</h2>
-      <div class="card-footer">
-        <span>Includes <strong>{{ emergencyBufferMonths }}m</strong> buffer & <strong>{{ retirementTax }}%</strong> tax (Est. total tax: <strong>{{ formatINRShort(totalTaxesPaid) }}</strong>)</span>
-      </div>
-    </div>
-
-    <!-- Card 2: Projected Corpus -->
-    <div class="kpi-card card-projected" title="Projected Corpus Formula:&#10;Iterative monthly compounding growth of all savings and investments up to Retirement Age.&#10;&#10;• Compounding at Pre-Retirement Expected Return %&#10;• Includes Today's Savings + Lump Sum + Monthly Savings (growing annually) + Ad-hoc deposits.">
-      <div class="card-glow"></div>
-      <span class="card-label">Projected {{ currentCountry.corpusLabel }} <span class="hover-info-badge">ℹ️</span></span>
-      <h2 class="card-value" [title]="formatINR(projectedCorpus)">{{ formatINRShort(projectedCorpus) }}</h2>
-      <div class="card-footer">
-        <span>Accumulated at Age <strong>{{ retirementAge }}</strong></span>
-      </div>
-    </div>
-
-    <!-- Card 3: Shortfall / Surplus -->
-    <div class="kpi-card" [ngClass]="shortfallOrSurplus >= 0 ? 'card-surplus' : 'card-shortfall'" title="Shortfall / Surplus Formula:&#10;Shortfall or Surplus = [Projected Corpus] - [Target Corpus Goal]&#10;&#10;• Surplus (On Track): Your projected wealth exceeds your SWR goal target.&#10;• Shortfall (Under-funded): The target gap you must bridge through extra monthly SIP or lump sum investments today.">
-      <div class="card-glow"></div>
-      <span class="card-label">Shortfall / Surplus <span class="hover-info-badge">ℹ️</span></span>
-      <h2 class="card-value">
-        {{ shortfallOrSurplus >= 0 ? '+' : '' }}{{ formatINRShort(shortfallOrSurplus) }}
-      </h2>
-      <div class="card-footer">
-        <span class="pill-badge" [ngClass]="shortfallOrSurplus >= 0 ? 'badge-success' : 'badge-danger'">
-          {{ shortfallOrSurplus >= 0 ? 'ON TRACK' : 'UNDER FUNDED' }}
-        </span>
-      </div>
-    </div>
-
-    <!-- Card 4: Longevity & Resolutions -->
-    <div class="kpi-card card-actions">
-      <div class="card-glow"></div>
-      <span class="card-label">Longevity & Resolutions</span>
-      @if (shortfallOrSurplus >= 0) {
-        <div class="success-resolution">
-          <p class="res-msg">Plan is Sustainable!</p>
-          <div class="mini-metrics">
-            <div>
-              <span class="mini-label">Depletion Age</span>
-              <span class="mini-val text-emerald">Past {{ lifeExpectancy }}</span>
+<div class="slds-scope slds-theme_default">
+  <!-- Page Header -->
+  <div class="slds-page-header">
+    <div class="slds-page-header__row">
+      <div class="slds-page-header__col-title">
+        <div class="slds-media">
+          <div class="slds-media__figure">
+            <span class="slds-icon_container slds-icon-standard-opportunity">
+              <svg class="slds-icon slds-page-header__icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+            </span>
+          </div>
+          <div class="slds-media__body">
+            <div class="slds-page-header__name">
+              <div class="slds-page-header__name-title">
+                <h1>
+                  <span class="slds-page-header__title slds-truncate" title="Retirement Planner">Retirement Planner</span>
+                </h1>
+              </div>
             </div>
+            <p class="slds-page-header__name-meta">Interactive simulations, safe withdrawal planning, and visual analytics</p>
           </div>
         </div>
-      } @else {
-        <div class="resolution-grid">
-          <div>
-            <span class="mini-label">Req. {{ currentCountry.name === 'India' ? 'Monthly SIP' : 'Monthly Saving' }}</span>
-            <span class="mini-val" [title]="formatINR(requiredSIP)">{{ formatINRShort(requiredSIP) }}</span>
-          </div>
-          <div>
-            <span class="mini-label">Req. Lump Sum Today</span>
-            <span class="mini-val" [title]="formatINR(requiredOneTime)">{{ formatINRShort(requiredOneTime) }}</span>
-          </div>
-        </div>
-      }
-      <div class="card-footer">
-        <span>Timeline to cross: <strong>{{ timeToReachCorpus }}</strong></span>
       </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Main Dashboard Body -->
-  <main class="dashboard-body">
-    <!-- Left Column: Controls (Inputs) -->
-    <section class="inputs-panel">
-      <div class="panel-header">
-        <h2>Simulation Settings</h2>
-        <p>Adjust inputs to instantly recompute projected assets</p>
+  <div class="slds-p-around_medium">
+    <!-- KPI Cards -->
+    <div class="slds-grid slds-wrap slds-gutters slds-m-bottom_medium">
+      <!-- Card 1 -->
+      <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-4 slds-m-bottom_small">
+        <article class="slds-card">
+          <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+              <div class="slds-media__body">
+                <h2 class="slds-card__header-title">
+                  <span class="slds-text-heading_small slds-truncate" title="Target Corpus">{{ currentCountry.corpusLabel }} Goal</span>
+                </h2>
+              </div>
+            </header>
+          </div>
+          <div class="slds-card__body slds-card__body_inner">
+            <div class="slds-text-heading_large" [title]="formatINR(targetCorpus)">{{ formatINRShort(targetCorpus) }}</div>
+            <p class="slds-text-body_small slds-m-top_x-small slds-text-color_weak">Includes {{ emergencyBufferMonths }}m buffer & {{ retirementTax }}% tax</p>
+          </div>
+        </article>
       </div>
 
-      <!-- Section: Localization Selector -->
-      <div class="input-section localization-section">
-        <h3>Target Country Localization</h3>
-        <div class="form-group">
-          <div class="form-label-row">
-            <label for="country-selector">Select Country / Region</label>
+      <!-- Card 2 -->
+      <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-4 slds-m-bottom_small">
+        <article class="slds-card">
+          <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+              <div class="slds-media__body">
+                <h2 class="slds-card__header-title">
+                  <span class="slds-text-heading_small slds-truncate" title="Projected Corpus">Projected {{ currentCountry.corpusLabel }}</span>
+                </h2>
+              </div>
+            </header>
           </div>
-          <div class="select-wrapper">
-            <select id="country-selector" class="select-input" [(ngModel)]="selectedCountryName" (change)="onCountryChange()">
-              @for (c of countriesConfig; track c.name) {
-                <option [value]="c.name">{{ c.name }} ({{ c.symbol }})</option>
+          <div class="slds-card__body slds-card__body_inner">
+            <div class="slds-text-heading_large" [title]="formatINR(projectedCorpus)">{{ formatINRShort(projectedCorpus) }}</div>
+            <p class="slds-text-body_small slds-m-top_x-small slds-text-color_weak">Accumulated at Age {{ retirementAge }}</p>
+          </div>
+        </article>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-4 slds-m-bottom_small">
+        <article class="slds-card" [ngClass]="shortfallOrSurplus >= 0 ? 'slds-theme_success slds-text-color_inverse' : 'slds-theme_error slds-text-color_inverse'">
+          <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+              <div class="slds-media__body">
+                <h2 class="slds-card__header-title">
+                  <span class="slds-text-heading_small slds-truncate" title="Shortfall/Surplus" [ngClass]="shortfallOrSurplus >= 0 ? 'slds-text-color_inverse' : 'slds-text-color_inverse'">Shortfall / Surplus</span>
+                </h2>
+              </div>
+            </header>
+          </div>
+          <div class="slds-card__body slds-card__body_inner">
+            <div class="slds-text-heading_large">
+              {{ shortfallOrSurplus >= 0 ? '+' : '' }}{{ formatINRShort(shortfallOrSurplus) }}
+            </div>
+            <p class="slds-text-body_small slds-m-top_x-small">
+              <strong>{{ shortfallOrSurplus >= 0 ? 'ON TRACK' : 'UNDER FUNDED' }}</strong>
+            </p>
+          </div>
+        </article>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-large-size_1-of-4 slds-m-bottom_small">
+        <article class="slds-card">
+          <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+              <div class="slds-media__body">
+                <h2 class="slds-card__header-title">
+                  <span class="slds-text-heading_small slds-truncate" title="Resolutions">Longevity & Resolutions</span>
+                </h2>
+              </div>
+            </header>
+          </div>
+          <div class="slds-card__body slds-card__body_inner">
+            @if (shortfallOrSurplus >= 0) {
+              <div class="slds-text-color_success">
+                <p><strong>Plan is Sustainable!</strong></p>
+                <p>Depletion Age: Past {{ lifeExpectancy }}</p>
+              </div>
+            } @else {
+              <div>
+                <p class="slds-text-body_small">Req. {{ currentCountry.name === 'India' ? 'Monthly SIP' : 'Monthly Saving' }}: <strong [title]="formatINR(requiredSIP)">{{ formatINRShort(requiredSIP) }}</strong></p>
+                <p class="slds-text-body_small">Req. Lump Sum Today: <strong [title]="formatINR(requiredOneTime)">{{ formatINRShort(requiredOneTime) }}</strong></p>
+              </div>
+            }
+            <p class="slds-text-body_small slds-m-top_x-small slds-text-color_weak">Timeline to cross: <strong>{{ timeToReachCorpus }}</strong></p>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="slds-grid slds-wrap slds-gutters">
+      <!-- Left Column: Settings -->
+      <div class="slds-col slds-size_1-of-1 slds-large-size_1-of-3">
+        <article class="slds-card slds-m-bottom_medium">
+          <div class="slds-card__header slds-grid">
+            <header class="slds-media slds-media_center slds-has-flexi-truncate">
+              <div class="slds-media__body">
+                <h2 class="slds-card__header-title">
+                  <span class="slds-text-heading_medium slds-truncate">Simulation Settings</span>
+                </h2>
+              </div>
+            </header>
+          </div>
+          <div class="slds-card__body slds-card__body_inner">
+            <!-- Country -->
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">Target Country Localization</label>
+              <div class="slds-form-element__control">
+                <div class="slds-select_container">
+                  <select class="slds-select" [(ngModel)]="selectedCountryName" (change)="onCountryChange()">
+                    @for (c of countriesConfig; track c.name) {
+                      <option [value]="c.name">{{ c.name }} ({{ c.symbol }})</option>
+                    }
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <h3 class="slds-section__title slds-theme_shade slds-m-top_medium slds-m-bottom_small">
+              <span class="slds-truncate slds-p-horizontal_small" title="Age & Timeline">Age & Timeline</span>
+            </h3>
+            
+            <!-- Age & Timeline -->
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">Current Age</label>
+              <div class="slds-form-element__control slds-grid slds-grid_vertical-align-center">
+                <input type="number" class="slds-input slds-size_1-of-4" [(ngModel)]="currentAge" (ngModelChange)="calculate()" min="18" max="100" />
+                <input type="range" class="slds-slider__range slds-size_3-of-4 slds-m-left_small" [(ngModel)]="currentAge" (ngModelChange)="calculate()" min="18" max="99" step="1" />
+              </div>
+            </div>
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">Retirement Age</label>
+              <div class="slds-form-element__control slds-grid slds-grid_vertical-align-center">
+                <input type="number" class="slds-input slds-size_1-of-4" [(ngModel)]="retirementAge" (ngModelChange)="calculate()" [min]="currentAge + 1" max="100" />
+                <input type="range" class="slds-slider__range slds-size_3-of-4 slds-m-left_small" [(ngModel)]="retirementAge" (ngModelChange)="calculate()" [min]="currentAge + 1" max="100" step="1" />
+              </div>
+            </div>
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">Life Expectancy</label>
+              <div class="slds-form-element__control slds-grid slds-grid_vertical-align-center">
+                <input type="number" class="slds-input slds-size_1-of-4" [(ngModel)]="lifeExpectancy" (ngModelChange)="calculate()" [min]="retirementAge + 1" max="110" />
+                <input type="range" class="slds-slider__range slds-size_3-of-4 slds-m-left_small" [(ngModel)]="lifeExpectancy" (ngModelChange)="calculate()" [min]="retirementAge + 1" max="110" step="1" />
+              </div>
+            </div>
+
+            <h3 class="slds-section__title slds-theme_shade slds-m-top_medium slds-m-bottom_small">
+              <span class="slds-truncate slds-p-horizontal_small" title="Expenses & Inflation">Expenses & Inflation</span>
+            </h3>
+
+            <!-- Expenses & Inflation -->
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">Monthly Expense today (Net) - <strong>{{ formatINR(monthlyExpenseToday) }}</strong></label>
+              <div class="slds-form-element__control slds-grid slds-grid_vertical-align-center">
+                <input type="number" class="slds-input slds-size_1-of-4" [(ngModel)]="monthlyExpenseToday" (ngModelChange)="calculate()" min="0" step="5000" />
+                <input type="range" class="slds-slider__range slds-size_3-of-4 slds-m-left_small" [(ngModel)]="monthlyExpenseToday" (ngModelChange)="calculate()" min="5000" max="500000" step="500" />
+              </div>
+            </div>
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">Inflation Rate (%)</label>
+              <div class="slds-form-element__control slds-grid slds-grid_vertical-align-center">
+                <input type="number" class="slds-input slds-size_1-of-4" [(ngModel)]="inflationRate" (ngModelChange)="calculate()" min="0" max="25" step="0.1" />
+                <input type="range" class="slds-slider__range slds-size_3-of-4 slds-m-left_small" [(ngModel)]="inflationRate" (ngModelChange)="calculate()" min="0" max="20" step="0.5" />
+              </div>
+            </div>
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">Safe Withdrawal Rate (SWR %)</label>
+              <div class="slds-form-element__control slds-grid slds-grid_vertical-align-center">
+                <input type="number" class="slds-input slds-size_1-of-4" [(ngModel)]="withdrawalRate" (ngModelChange)="calculate()" min="1" max="15" step="0.1" />
+                <input type="range" class="slds-slider__range slds-size_3-of-4 slds-m-left_small" [(ngModel)]="withdrawalRate" (ngModelChange)="calculate()" min="1" max="12" step="0.25" />
+              </div>
+            </div>
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">{{ currentCountry.taxLabel }} (%)</label>
+              <div class="slds-form-element__control slds-grid slds-grid_vertical-align-center">
+                <input type="number" class="slds-input slds-size_1-of-4" [(ngModel)]="retirementTax" (ngModelChange)="calculate()" min="0" max="50" />
+                <input type="range" class="slds-slider__range slds-size_3-of-4 slds-m-left_small" [(ngModel)]="retirementTax" (ngModelChange)="calculate()" min="0" max="30" step="1" />
+              </div>
+            </div>
+
+            <h3 class="slds-section__title slds-theme_shade slds-m-top_medium slds-m-bottom_small">
+              <span class="slds-truncate slds-p-horizontal_small" title="Current Savings & Investments">Current Savings & Investments</span>
+            </h3>
+
+            <!-- Assets -->
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">Existing Savings / Assets - <strong>{{ formatINR(currentCorpus) }}</strong></label>
+              <div class="slds-form-element__control">
+                <input type="number" class="slds-input" [(ngModel)]="currentCorpus" (ngModelChange)="calculate()" min="0" step="50000" />
+              </div>
+            </div>
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">{{ currentCountry.lumpSumLabel }} - <strong>{{ formatINR(oneTimeInvestment) }}</strong></label>
+              <div class="slds-form-element__control">
+                <input type="number" class="slds-input" [(ngModel)]="oneTimeInvestment" (ngModelChange)="calculate()" min="0" step="50000" />
+              </div>
+            </div>
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">{{ currentCountry.sipLabel }} - <strong>{{ formatINR(monthlySIP) }}</strong></label>
+              <div class="slds-form-element__control slds-grid slds-grid_vertical-align-center">
+                <input type="number" class="slds-input slds-size_1-of-4" [(ngModel)]="monthlySIP" (ngModelChange)="calculate()" min="0" step="2000" />
+                <input type="range" class="slds-slider__range slds-size_3-of-4 slds-m-left_small" [(ngModel)]="monthlySIP" (ngModelChange)="calculate()" min="0" max="200000" step="1000" />
+              </div>
+            </div>
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">{{ currentCountry.stepUpLabel }}</label>
+              <div class="slds-form-element__control slds-grid slds-grid_vertical-align-center">
+                <input type="number" class="slds-input slds-size_1-of-4" [(ngModel)]="sipStepUp" (ngModelChange)="calculate()" min="0" max="50" />
+                <input type="range" class="slds-slider__range slds-size_3-of-4 slds-m-left_small" [(ngModel)]="sipStepUp" (ngModelChange)="calculate()" min="0" max="25" step="1" />
+              </div>
+            </div>
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">Emergency Buffer (Months)</label>
+              <div class="slds-form-element__control slds-grid slds-grid_vertical-align-center">
+                <input type="number" class="slds-input slds-size_1-of-4" [(ngModel)]="emergencyBufferMonths" (ngModelChange)="calculate()" min="0" max="60" />
+                <input type="range" class="slds-slider__range slds-size_3-of-4 slds-m-left_small" [(ngModel)]="emergencyBufferMonths" (ngModelChange)="calculate()" min="0" max="36" step="1" />
+              </div>
+            </div>
+
+            <h3 class="slds-section__title slds-theme_shade slds-m-top_medium slds-m-bottom_small">
+              <span class="slds-truncate slds-p-horizontal_small" title="Expected Returns">Expected Returns</span>
+            </h3>
+            
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">Pre-Retirement Return (%)</label>
+              <div class="slds-form-element__control slds-grid slds-grid_vertical-align-center">
+                <input type="number" class="slds-input slds-size_1-of-4" [(ngModel)]="expectedReturnPre" (ngModelChange)="calculate()" min="1" max="30" step="0.5" />
+                <input type="range" class="slds-slider__range slds-size_3-of-4 slds-m-left_small" [(ngModel)]="expectedReturnPre" (ngModelChange)="calculate()" min="1" max="25" step="0.5" />
+              </div>
+            </div>
+            <div class="slds-form-element slds-m-bottom_small">
+              <label class="slds-form-element__label">Post-Retirement Return (%)</label>
+              <div class="slds-form-element__control slds-grid slds-grid_vertical-align-center">
+                <input type="number" class="slds-input slds-size_1-of-4" [(ngModel)]="expectedReturnPost" (ngModelChange)="calculate()" min="1" max="30" step="0.5" />
+                <input type="range" class="slds-slider__range slds-size_3-of-4 slds-m-left_small" [(ngModel)]="expectedReturnPost" (ngModelChange)="calculate()" min="1" max="20" step="0.5" />
+              </div>
+            </div>
+
+            <!-- Ad-hoc Contributions -->
+            <div class="slds-m-top_medium">
+              <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-m-bottom_small">
+                <h3 class="slds-text-heading_small">Ad-hoc Contributions</h3>
+                <button class="slds-button slds-button_neutral" (click)="addAdHocRow()">Add Row</button>
+              </div>
+              @if (adHocInvestments.length === 0) {
+                <p class="slds-text-body_small slds-text-color_weak">No ad-hoc contributions configured.</p>
+              } @else {
+                @for (inv of adHocInvestments; track $index) {
+                  <div class="slds-grid slds-gutters slds-m-bottom_x-small slds-grid_vertical-align-end">
+                    <div class="slds-col slds-size_1-of-3">
+                      <div class="slds-form-element">
+                        <label class="slds-form-element__label">Yr from now</label>
+                        <div class="slds-form-element__control">
+                          <input type="number" class="slds-input" [(ngModel)]="inv.year" (ngModelChange)="onAdHocChange()" min="1" [max]="retirementAge - currentAge" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="slds-col slds-size_2-of-3 slds-grid slds-grid_vertical-align-end">
+                      <div class="slds-form-element slds-grow">
+                        <label class="slds-form-element__label">Lump Sum</label>
+                        <div class="slds-form-element__control">
+                          <input type="number" class="slds-input" [(ngModel)]="inv.amount" (ngModelChange)="onAdHocChange()" min="0" step="10000" />
+                        </div>
+                      </div>
+                      <button class="slds-button slds-button_icon slds-button_icon-error slds-m-left_x-small" (click)="deleteAdHocRow($index)" title="Remove Row">
+                        <svg class="slds-button__icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor">
+                          <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm80-80h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                }
               }
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- Section: Age Timeline -->
-      <div class="input-section">
-        <h3>Age & Retirement Timeline</h3>
-        
-        <!-- Current Age -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>Current Age</label>
-            <input type="number" class="num-input" [(ngModel)]="currentAge" (ngModelChange)="calculate()" min="18" max="100" />
-          </div>
-          <input type="range" class="slider-input" [(ngModel)]="currentAge" (ngModelChange)="calculate()" min="18" max="99" step="1" />
-        </div>
-
-        <!-- Retirement Age -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>Retirement Age</label>
-            <input type="number" class="num-input" [(ngModel)]="retirementAge" (ngModelChange)="calculate()" [min]="currentAge + 1" max="100" />
-          </div>
-          <input type="range" class="slider-input" [(ngModel)]="retirementAge" (ngModelChange)="calculate()" [min]="currentAge + 1" max="100" step="1" />
-        </div>
-
-        <!-- Life Expectancy -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>Life Expectancy</label>
-            <input type="number" class="num-input" [(ngModel)]="lifeExpectancy" (ngModelChange)="calculate()" [min]="retirementAge + 1" max="110" />
-          </div>
-          <input type="range" class="slider-input" [(ngModel)]="lifeExpectancy" (ngModelChange)="calculate()" [min]="retirementAge + 1" max="110" step="1" />
-        </div>
-      </div>
-
-      <!-- Section: Expenses & Inflation -->
-      <div class="input-section">
-        <h3>Expenses & Inflation</h3>
-
-        <!-- Monthly Expense -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>Monthly Expense today (Net)</label>
-            <input type="number" class="num-input currency-input" [(ngModel)]="monthlyExpenseToday" (ngModelChange)="calculate()" min="0" step="5000" />
-          </div>
-          <span class="formatted-hint">{{ formatINR(monthlyExpenseToday) }}</span>
-          <input type="range" class="slider-input" [(ngModel)]="monthlyExpenseToday" (ngModelChange)="calculate()" min="5000" max="500000" step="500" />
-        </div>
-
-        <!-- Inflation Rate -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>Inflation Rate (%)</label>
-            <input type="number" class="num-input" [(ngModel)]="inflationRate" (ngModelChange)="calculate()" min="0" max="25" step="0.1" />
-          </div>
-          <input type="range" class="slider-input" [(ngModel)]="inflationRate" (ngModelChange)="calculate()" min="0" max="20" step="0.5" />
-        </div>
-
-        <!-- Withdrawal Rate -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>Safe Withdrawal Rate (SWR %)</label>
-            <input type="number" class="num-input" [(ngModel)]="withdrawalRate" (ngModelChange)="calculate()" min="1" max="15" step="0.1" />
-          </div>
-          <input type="range" class="slider-input" [(ngModel)]="withdrawalRate" (ngModelChange)="calculate()" min="1" max="12" step="0.25" />
-        </div>
-
-        <!-- Retirement Income Tax -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>{{ currentCountry.taxLabel }} (%)</label>
-            <input type="number" class="num-input" [(ngModel)]="retirementTax" (ngModelChange)="calculate()" min="0" max="50" />
-          </div>
-          <input type="range" class="slider-input" [(ngModel)]="retirementTax" (ngModelChange)="calculate()" min="0" max="30" step="1" />
-        </div>
-      </div>
-
-      <!-- Section: Savings and Assets -->
-      <div class="input-section">
-        <h3>Current Savings & Investments</h3>
-
-        <!-- Current Corpus -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>Existing Savings / Assets</label>
-            <input type="number" class="num-input" [(ngModel)]="currentCorpus" (ngModelChange)="calculate()" min="0" step="50000" />
-          </div>
-          <span class="formatted-hint">{{ formatINR(currentCorpus) }}</span>
-        </div>
-
-        <!-- Lump sum Investment today -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>{{ currentCountry.lumpSumLabel }}</label>
-            <input type="number" class="num-input" [(ngModel)]="oneTimeInvestment" (ngModelChange)="calculate()" min="0" step="50000" />
-          </div>
-          <span class="formatted-hint">{{ formatINR(oneTimeInvestment) }}</span>
-        </div>
-
-        <!-- Monthly SIP -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>{{ currentCountry.sipLabel }}</label>
-            <input type="number" class="num-input" [(ngModel)]="monthlySIP" (ngModelChange)="calculate()" min="0" step="2000" />
-          </div>
-          <span class="formatted-hint">{{ formatINR(monthlySIP) }}</span>
-          <input type="range" class="slider-input" [(ngModel)]="monthlySIP" (ngModelChange)="calculate()" min="0" max="200000" step="1000" />
-        </div>
-
-        <!-- SIP Step Up -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>{{ currentCountry.stepUpLabel }}</label>
-            <input type="number" class="num-input" [(ngModel)]="sipStepUp" (ngModelChange)="calculate()" min="0" max="50" />
-          </div>
-          <input type="range" class="slider-input" [(ngModel)]="sipStepUp" (ngModelChange)="calculate()" min="0" max="25" step="1" />
-        </div>
-
-        <!-- Emergency Buffer -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>Emergency Buffer (Months of Expense)</label>
-            <input type="number" class="num-input" [(ngModel)]="emergencyBufferMonths" (ngModelChange)="calculate()" min="0" max="60" />
-          </div>
-          <input type="range" class="slider-input" [(ngModel)]="emergencyBufferMonths" (ngModelChange)="calculate()" min="0" max="36" step="1" />
-        </div>
-      </div>
-
-      <!-- Section: Investment Returns -->
-      <div class="input-section">
-        <h3>Expected Investment Returns</h3>
-
-        <!-- Return Pre-retirement -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>Pre-Retirement Return (%)</label>
-            <input type="number" class="num-input" [(ngModel)]="expectedReturnPre" (ngModelChange)="calculate()" min="1" max="30" step="0.5" />
-          </div>
-          <input type="range" class="slider-input" [(ngModel)]="expectedReturnPre" (ngModelChange)="calculate()" min="1" max="25" step="0.5" />
-        </div>
-
-        <!-- Return Post-retirement -->
-        <div class="form-group">
-          <div class="form-label-row">
-            <label>Post-Retirement Return (%)</label>
-            <input type="number" class="num-input" [(ngModel)]="expectedReturnPost" (ngModelChange)="calculate()" min="1" max="30" step="0.5" />
-          </div>
-          <input type="range" class="slider-input" [(ngModel)]="expectedReturnPost" (ngModelChange)="calculate()" min="1" max="20" step="0.5" />
-        </div>
-      </div>
-
-      <!-- Section: Ad-hoc Investments -->
-      <div class="input-section adhoc-section">
-        <div class="adhoc-header">
-          <h3>Ad-hoc Contributions</h3>
-          <button type="button" class="btn-add-row" (click)="addAdHocRow()">
-            <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960" width="18" fill="currentColor">
-              <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/>
-            </svg>
-            Add Row
-          </button>
-        </div>
-        
-        @if (adHocInvestments.length === 0) {
-          <p class="no-adhoc-text">No ad-hoc contributions configured. Add row to model one-off deposits.</p>
-        } @else {
-          <div class="adhoc-list">
-            @for (inv of adHocInvestments; track $index) {
-              <div class="adhoc-row">
-                <div class="adhoc-field-year">
-                  <span class="adhoc-label">Yr from now</span>
-                  <input type="number" class="adhoc-input" [(ngModel)]="inv.year" (ngModelChange)="onAdHocChange()" min="1" [max]="retirementAge - currentAge" />
-                </div>
-                <div class="adhoc-field-amt">
-                  <span class="adhoc-label">Lump Sum Amount ({{ currentCountry.symbol }})</span>
-                  <input type="number" class="adhoc-input" [(ngModel)]="inv.amount" (ngModelChange)="onAdHocChange()" min="0" step="10000" />
-                  <span class="adhoc-hint">{{ formatCurrencyShort(inv.amount) }}</span>
-                </div>
-                <button type="button" class="btn-delete-row" (click)="deleteAdHocRow($index)" title="Remove ad-hoc row">
-                  <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960" width="18" fill="currentColor">
-                    <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm80-80h80v-360h-80v360Zm160 0h80v-360h-80v360Z"/>
-                  </svg>
-                </button>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    </section>
-
-    <!-- Right Column: Visualizer & Ledger -->
-    <section class="outputs-panel">
-      <!-- Tabs Selector -->
-      <div class="tabs-nav">
-        <button type="button" class="tab-btn" [class.active]="activeTab === 'charts'" (click)="setTab('charts')">
-          <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960" width="18" fill="currentColor">
-            <path d="M284-200h80v-280h-80v280Zm160 0h80v-440h-80v440Zm160 0h80v-160h-80v160ZM160-120q-33 0-56.5-23.5T80-200v-560q0-33 23.5-56.5T160-840h640q33 0 56.5 23.5T920-760v560q0 33-23.5 56.5T800-120H160Zm0-80h640v-560H160v560Zm0 0v-560 560Z"/>
-          </svg>
-          Visual Projections
-        </button>
-        <button type="button" class="tab-btn" [class.active]="activeTab === 'ledger'" (click)="setTab('ledger')">
-          <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960" width="18" fill="currentColor">
-            <path d="M120-120v-720h720v720H120Zm80-80h560v-200H200v200Zm0-280h560v-160H200v160Zm0-240h560v-40H200v40Z"/>
-          </svg>
-          Year-on-Year Ledger
-        </button>
-        <button type="button" class="tab-btn" [class.active]="activeTab === 'guide'" (click)="setTab('guide')">
-          <svg xmlns="http://www.w3.org/2000/svg" height="18" viewBox="0 -960 960 960" width="18" fill="currentColor">
-            <path d="M120-240h320v-80H120v80Zm0-200h480v-80H120v80Zm0-200h480v-80H120v80ZM560-80v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T906-317L685-96 560-80Zm286-286-37-37 37 37ZM620-140h38l121-121-19-19-19-19-121 121v38Z"/>
-          </svg>
-          User Guide
-        </button>
-      </div>
-
-      <!-- Tab Content: Charts -->
-      @if (activeTab === 'charts') {
-        <div class="tab-content charts-tab">
-          <!-- Textual Summary Analysis -->
-          <div class="analysis-summary-card">
-            <h3>Wealth Advisor's Analysis</h3>
-            <p>
-              By investing a total of <strong class="text-indigo">{{ formatINR(totalInvested) }}</strong> (via lump sum, savings, and ad-hoc deposits), 
-              your portfolio is projected to accumulate a wealth of <strong class="text-emerald">{{ formatINR(projectedCorpus) }}</strong> by retirement (Age {{ retirementAge }}).
-            </p>
-            
-            @if (shortfallOrSurplus < 0) {
-              <p class="analysis-warning">
-                ⚠️ **Corpus Shortfall**: You face a deficit of <strong>{{ formatINR(Math.abs(shortfallOrSurplus)) }}</strong> against your realistic target corpus of <strong>{{ formatINR(targetCorpus) }}</strong> (which includes a <strong>{{ emergencyBufferMonths }}-month emergency buffer</strong> and accounts for <strong>{{ retirementTax }}% withdrawal tax</strong>, projected to cost you <strong>{{ formatINR(totalTaxesPaid) }}</strong> in lifetime taxes). 
-                To bridge this gap, consider raising your monthly savings rate to <strong>{{ formatINR(requiredSIP) }}</strong> (with step-up) or investing an additional lump sum of <strong>{{ formatINR(requiredOneTime) }}</strong> today.
-              </p>
-            } @else {
-              <p class="analysis-success">
-                🎉 **Goal Achieved**: Your investments will exceed the required target corpus of <strong>{{ formatINR(targetCorpus) }}</strong>, leaving you with a surplus of <strong>{{ formatINR(shortfallOrSurplus) }}</strong> at retirement (after accounting for <strong>{{ formatINR(totalTaxesPaid) }}</strong> in lifetime retirement taxes).
-              </p>
-            }
-
-            @if (depletionAge !== -1) {
-              <p class="analysis-danger">
-                🛑 **Outliving Risk**: Based on your post-retirement withdrawals, your corpus is projected to be <strong>fully depleted by Age {{ depletionAge }}</strong> ({{ lifeExpectancy - depletionAge }} years before your life expectancy of {{ lifeExpectancy }}). Your money will last for {{ depletionAge - retirementAge }} years in retirement.
-              </p>
-            } @else {
-              <p class="analysis-longevity">
-                🛡️ **Sustainability**: Your retirement corpus is **fully sustainable** and will last past your life expectancy of {{ lifeExpectancy }}, leaving an estimated estate/inheritance of <strong>{{ formatINR(inheritance) }}</strong>.
-              </p>
-            }
-          </div>
-
-          <!-- Charts Layout -->
-          <div class="charts-layout-grid">
-            <!-- Line Chart: Corpus Growth -->
-            <div class="chart-container line-chart-card">
-              <h4>{{ currentCountry.corpusLabel }} Trajectory (Accumulation & Decumulation)</h4>
-              <div class="canvas-wrapper">
-                <canvas #corpusChartCanvas></canvas>
-              </div>
-            </div>
-
-            <div class="doughnut-charts-grid">
-              <!-- Doughnut Chart 1: Contributions vs Growth -->
-              <div class="chart-container doughnut-chart-card">
-                <h4>Wealth Breakdown (Accumulation Phase)</h4>
-                <div class="canvas-wrapper">
-                  <canvas #contribChartCanvas></canvas>
-                </div>
-              </div>
-
-              <!-- Doughnut Chart 2: Retirement Fund Allocation -->
-              <div class="chart-container doughnut-chart-card">
-                <h4>Retirement Fund Allocation</h4>
-                <div class="canvas-wrapper">
-                  <canvas #retirementChartCanvas></canvas>
-                </div>
-              </div>
             </div>
           </div>
-        </div>
-      }
+        </article>
+      </div>
 
-      <!-- Tab Content: Detailed Ledger -->
-      @if (activeTab === 'ledger') {
-        <div class="tab-content ledger-tab">
-          <div class="table-card">
-            <div class="table-header">
-              <h3>Year-on-Year Portfolio Statement</h3>
-              <span class="table-subtitle">All values are in localized currency ({{ currentCountry.currency }}). Hover over column headers/values for formulas.</span>
-            </div>
-            
-            <div class="table-scroll-container">
-              <table class="ledger-statement-table">
-                <thead>
-                  <tr>
-                    <th title="Year number from current year (Year 0 = Today)">Yr ℹ️</th>
-                    <th title="Calculated Age at each step">Age ℹ️</th>
-                    <th title="Accumulation Phase (saving/compounding) vs Retirement Phase (decumulation/spending)">Phase ℹ️</th>
-                    <th class="text-right" title="Formula:&#10;Equal to the previous year's Closing Balance (or Current Savings + Lump Sum today for Year 0)">Opening Bal ℹ️</th>
-                    <th class="text-right" title="Formula (Accumulation Phase only):&#10;Annual savings deposits (escalating annually) + any Ad-hoc lumpsum deposits.&#10;• Retirement Phase: 0 (No savings)">Contributions ℹ️</th>
-                    <th class="text-right" title="Formula:&#10;Compounded monthly growth earned on balance.&#10;• Accumulation Phase: pre-retirement expected return rate&#10;• Retirement Phase: post-retirement expected return rate">Growth (Return) ℹ️</th>
-                    <th class="text-right" title="Formula (Retirement Phase only):&#10;Annual expenses grossed up to cover withdrawal taxes, compounding annually at Inflation Rate.&#10;• Accumulation Phase: 0">Gross Withdrawal ℹ️</th>
-                    <th class="text-right" title="Formula (Retirement Phase only):&#10;Tax paid on withdrawals at retirement tax rate.&#10;• Accumulation Phase: 0">Taxes Paid ℹ️</th>
-                    <th class="text-right" title="Formula (Retirement Phase only):&#10;Net cash payout you receive to spend (Gross Withdrawal - Taxes Paid).&#10;• Accumulation Phase: 0">Net Payout ℹ️</th>
-                    <th class="text-right" title="Formula:&#10;Closing Balance = Opening Balance + Contributions + Growth - Withdrawals">Closing Bal ℹ️</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (row of ledger; track row.year) {
-                    <tr [class.retirement-row]="row.age > retirementAge" [class.depleted-row]="row.closingBalance === 0 && row.openingBalance === 0">
-                      <td title="Year number from current year (Year 0 = Today)">{{ row.year }}</td>
-                      <td class="font-bold" title="Calculated Age at each step">{{ row.age }}</td>
-                      <td>
-                        @if (row.year === 0) {
-                          <span class="badge badge-start" title="Start milestone">Start</span>
-                        } @else if (row.age <= retirementAge) {
-                          <span class="badge badge-acc" title="Accumulation Phase (Saving & Compounding)">Accumulate</span>
-                        } @else {
-                          <span class="badge badge-ret" title="Retirement Phase (Spending & Drawdown)">Retirement</span>
-                        }
-                      </td>
-                      <td class="text-right font-mono" title="Formula:&#10;Equal to the previous year's Closing Balance">{{ formatINR(row.openingBalance) }}</td>
-                      <td class="text-right font-mono text-indigo" title="Formula (Accumulation Phase only):&#10;Savings contributions + Ad-hoc lump sums in this year">{{ row.contributions > 0 ? formatINR(row.contributions) : '—' }}</td>
-                      <td class="text-right font-mono text-emerald" title="Formula:&#10;Compounded monthly growth earned on balance">{{ row.growth > 0 ? formatINR(row.growth) : '—' }}</td>
-                      <td class="text-right font-mono text-rose" title="Formula (Retirement Phase only):&#10;Annual expenses grossed up to cover withdrawal taxes, compounding annually at Inflation Rate">{{ row.withdrawals > 0 ? formatINR(row.withdrawals) : '—' }}</td>
-                      <td class="text-right font-mono text-amber" title="Formula (Retirement Phase only):&#10;Tax paid on withdrawals">{{ row.taxPaid > 0 ? formatINR(row.taxPaid) : '—' }}</td>
-                      <td class="text-right font-mono text-emerald" title="Formula (Retirement Phase only):&#10;Net cash payout you receive to spend">{{ row.netWithdrawals > 0 ? formatINR(row.netWithdrawals) : '—' }}</td>
-                      <td class="text-right font-mono font-bold" title="Formula:&#10;Closing Balance = Opening Balance + Contributions + Growth - Withdrawals">{{ formatINR(row.closingBalance) }}</td>
-                    </tr>
+      <!-- Right Column: Outputs -->
+      <div class="slds-col slds-size_1-of-1 slds-large-size_2-of-3">
+        <article class="slds-card">
+          <div class="slds-card__body">
+            <div class="slds-tabs_default">
+              <ul class="slds-tabs_default__nav" role="tablist">
+                <li class="slds-tabs_default__item" [class.slds-is-active]="activeTab === 'charts'" role="presentation">
+                  <a class="slds-tabs_default__link" href="javascript:void(0);" (click)="setTab('charts')" role="tab">Visual Projections</a>
+                </li>
+                <li class="slds-tabs_default__item" [class.slds-is-active]="activeTab === 'ledger'" role="presentation">
+                  <a class="slds-tabs_default__link" href="javascript:void(0);" (click)="setTab('ledger')" role="tab">Year-on-Year Ledger</a>
+                </li>
+                <li class="slds-tabs_default__item" [class.slds-is-active]="activeTab === 'guide'" role="presentation">
+                  <a class="slds-tabs_default__link" href="javascript:void(0);" (click)="setTab('guide')" role="tab">User Guide</a>
+                </li>
+              </ul>
+              
+              <div class="slds-tabs_default__content" [class.slds-show]="activeTab === 'charts'" [class.slds-hide]="activeTab !== 'charts'">
+                <!-- Charts Tab -->
+                <div class="slds-box slds-theme_shade slds-m-bottom_medium">
+                  <h3 class="slds-text-heading_small slds-m-bottom_x-small">Wealth Advisor's Analysis</h3>
+                  <p class="slds-m-bottom_x-small">By investing a total of <strong class="slds-text-color_success">{{ formatINR(totalInvested) }}</strong>, your portfolio is projected to accumulate a wealth of <strong class="slds-text-color_success">{{ formatINR(projectedCorpus) }}</strong> by retirement (Age {{ retirementAge }}).</p>
+                  
+                  @if (shortfallOrSurplus < 0) {
+                    <p class="slds-text-color_error slds-m-bottom_x-small">⚠️ Corpus Shortfall: You face a deficit of <strong>{{ formatINR(Math.abs(shortfallOrSurplus)) }}</strong> against your realistic target corpus of <strong>{{ formatINR(targetCorpus) }}</strong>. To bridge this gap, consider raising your monthly savings rate to <strong>{{ formatINR(requiredSIP) }}</strong> (with step-up) or investing an additional lump sum of <strong>{{ formatINR(requiredOneTime) }}</strong> today.</p>
+                  } @else {
+                    <p class="slds-text-color_success slds-m-bottom_x-small">🎉 Goal Achieved: Your investments will exceed the required target corpus of <strong>{{ formatINR(targetCorpus) }}</strong>, leaving you with a surplus of <strong>{{ formatINR(shortfallOrSurplus) }}</strong> at retirement.</p>
                   }
-                </tbody>
-              </table>
+                  
+                  @if (depletionAge !== -1) {
+                    <p class="slds-text-color_error">🛑 Outliving Risk: Based on your post-retirement withdrawals, your corpus is projected to be <strong>fully depleted by Age {{ depletionAge }}</strong>.</p>
+                  } @else {
+                    <p class="slds-text-color_success">🛡️ Sustainability: Your retirement corpus is <strong>fully sustainable</strong> and will last past your life expectancy of {{ lifeExpectancy }}.</p>
+                  }
+                </div>
+
+                <div class="slds-grid slds-wrap slds-gutters">
+                  <div class="slds-col slds-size_1-of-1 slds-m-bottom_medium">
+                    <div class="slds-box">
+                      <h4 class="slds-text-heading_small slds-m-bottom_small">{{ currentCountry.corpusLabel }} Trajectory</h4>
+                      <div style="position: relative; height: 300px; width: 100%;">
+                        <canvas #corpusChartCanvas></canvas>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_medium">
+                    <div class="slds-box">
+                      <h4 class="slds-text-heading_small slds-m-bottom_small">Wealth Breakdown</h4>
+                      <div style="position: relative; height: 250px; width: 100%;">
+                        <canvas #contribChartCanvas></canvas>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_medium">
+                    <div class="slds-box">
+                      <h4 class="slds-text-heading_small slds-m-bottom_small">Fund Allocation</h4>
+                      <div style="position: relative; height: 250px; width: 100%;">
+                        <canvas #retirementChartCanvas></canvas>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="slds-tabs_default__content" [class.slds-show]="activeTab === 'ledger'" [class.slds-hide]="activeTab !== 'ledger'">
+                <!-- Ledger Tab -->
+                <div class="slds-scrollable_x">
+                  <table class="slds-table slds-table_cell-buffer slds-table_bordered slds-table_striped">
+                    <thead>
+                      <tr class="slds-line-height_reset">
+                        <th>Yr</th>
+                        <th>Age</th>
+                        <th>Phase</th>
+                        <th class="slds-text-align_right">Opening Bal</th>
+                        <th class="slds-text-align_right">Contributions</th>
+                        <th class="slds-text-align_right">Growth</th>
+                        <th class="slds-text-align_right">Withdrawal</th>
+                        <th class="slds-text-align_right">Taxes Paid</th>
+                        <th class="slds-text-align_right">Net Payout</th>
+                        <th class="slds-text-align_right">Closing Bal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (row of ledger; track row.year) {
+                        <tr>
+                          <td>{{ row.year }}</td>
+                          <td><strong>{{ row.age }}</strong></td>
+                          <td>
+                            @if (row.year === 0) {
+                              <span class="slds-badge">Start</span>
+                            } @else if (row.age <= retirementAge) {
+                              <span class="slds-badge slds-theme_success">Accumulate</span>
+                            } @else {
+                              <span class="slds-badge slds-theme_warning">Retirement</span>
+                            }
+                          </td>
+                          <td class="slds-text-align_right">{{ formatINR(row.openingBalance) }}</td>
+                          <td class="slds-text-align_right slds-text-color_success">{{ row.contributions > 0 ? formatINR(row.contributions) : '—' }}</td>
+                          <td class="slds-text-align_right slds-text-color_success">{{ row.growth > 0 ? formatINR(row.growth) : '—' }}</td>
+                          <td class="slds-text-align_right slds-text-color_error">{{ row.withdrawals > 0 ? formatINR(row.withdrawals) : '—' }}</td>
+                          <td class="slds-text-align_right slds-text-color_error">{{ row.taxPaid > 0 ? formatINR(row.taxPaid) : '—' }}</td>
+                          <td class="slds-text-align_right">{{ row.netWithdrawals > 0 ? formatINR(row.netWithdrawals) : '—' }}</td>
+                          <td class="slds-text-align_right"><strong>{{ formatINR(row.closingBalance) }}</strong></td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="slds-tabs_default__content" [class.slds-show]="activeTab === 'guide'" [class.slds-hide]="activeTab !== 'guide'">
+                <!-- Guide Tab -->
+                <div class="slds-box">
+                  <h2 class="slds-text-heading_medium slds-m-bottom_medium">📘 Quick Start User Guide</h2>
+                  <p class="slds-m-bottom_medium">Welcome to the Retirement Planner! Follow this step-by-step framework to map out your retirement roadmap in 5 minutes.</p>
+                  
+                  <ul class="slds-list_ordered">
+                    <li class="slds-m-bottom_small"><strong>Localize Your Plan</strong>: Select your target country from the dropdown at the top of the settings.</li>
+                    <li class="slds-m-bottom_small"><strong>Define Your Timeline</strong>: Set your Current Age, planned Retirement Age, and Life Expectancy.</li>
+                    <li class="slds-m-bottom_small"><strong>Input Expenses</strong>: Enter your current monthly expense in today's money value.</li>
+                    <li class="slds-m-bottom_small"><strong>Map Out Savings</strong>: Input your existing savings, lump sum, and SIP.</li>
+                    <li class="slds-m-bottom_small"><strong>Review Results</strong>: Look at the Wealth Advisor's Analysis and charts to resolve shortfalls.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      }
-
-      <!-- Tab Content: User Guide -->
-      @if (activeTab === 'guide') {
-        <div class="tab-content guide-tab">
-          <div class="guide-card">
-            <h2>📘 Quick Start User Guide</h2>
-            <p class="guide-intro">
-              Welcome to the Retirement Planner! Follow this step-by-step framework to map out your retirement roadmap in 5 minutes.
-            </p>
-
-            <div class="guide-steps">
-              <div class="guide-step">
-                <div class="step-badge">Step 1</div>
-                <div class="step-content">
-                  <h4>Localize Your Plan</h4>
-                  <p>
-                    Select your target country from the dropdown at the top of the settings. This automatically sets currency formatting, inflation averages, tax estimates, and typical expected returns for your location.
-                  </p>
-                </div>
-              </div>
-
-              <div class="guide-step">
-                <div class="step-badge">Step 2</div>
-                <div class="step-content">
-                  <h4>Define Your Timeline</h4>
-                  <p>
-                    Set your <strong>Current Age</strong>, planned <strong>Retirement Age</strong>, and conservative <strong>Life Expectancy</strong>. This defines your Accumulation Phase (investing years) and Decumulation Phase (retirement spending years).
-                  </p>
-                </div>
-              </div>
-
-              <div class="guide-step">
-                <div class="step-badge">Step 3</div>
-                <div class="step-content">
-                  <h4>Input Expenses & Inflation</h4>
-                  <p>
-                    Enter your current monthly expense in today's money value. SWR (Safe Withdrawal Rate, default 4%) determines what corpus is needed to support this expense. We adjust this automatically to cover your location's **Retirement Tax Rate** and set aside an **Emergency Buffer** (e.g., 12 months of expenses).
-                  </p>
-                </div>
-              </div>
-
-              <div class="guide-step">
-                <div class="step-badge">Step 4</div>
-                <div class="step-content">
-                  <h4>Map Out Your Savings & Investments</h4>
-                  <p>
-                    Input your existing retirement savings, any lump sums you can invest today, and your current monthly SIP amount. Keep the **Annual SIP Step-Up** (e.g., 5% - 10%) turned on to model how your monthly savings will grow as your salary increases over time. Use **Ad-hoc Investments** for one-off expected windfalls (like bonuses or inheritance).
-                  </p>
-                </div>
-              </div>
-
-              <div class="guide-step">
-                <div class="step-badge">Step 5</div>
-                <div class="step-content">
-                  <h4>Review Results & Resolve Shortfalls</h4>
-                  <p>
-                    Look at the **KPI Dashboard** and **Wealth Advisor's Analysis**. If you have a shortfall, the calculator dynamically computes the **Required Monthly SIP** or the **One-time Lump Sum Today** you need to plug the gap. Inspect the chart trajectory and toggle the **Year-on-Year Ledger** tab to review the exact ledger.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div class="guide-glossary">
-              <h3>💡 Key Terms Explained</h3>
-              <dl>
-                <dt>Safe Withdrawal Rate (SWR)</dt>
-                <dd>The estimated percentage of your retirement corpus you can withdraw annually without running out of money. The standard rule of thumb is 4%.</dd>
-                
-                <dt>Emergency Buffer</dt>
-                <dd>A dedicated liquid reserve fund of 6–12 months of expenses, kept separate from volatile equity investments to prevent selling during market crashes.</dd>
-
-                <dt>Step-Up SIP / Contribution Step-Up</dt>
-                <dd>Increasing your monthly investment amount annually by a fixed percentage to keep pace with your career promotions and income growth.</dd>
-
-                <dt>Retirement Income Tax</dt>
-                <dd>Taxes deducted from withdrawals. We gross up your required withdrawals from the corpus to make sure your net take-home cash matches your actual monthly expenses.</dd>
-              </dl>
-            </div>
-          </div>
-        </div>
-      }
-    </section>
-  </main>
-  <!-- Cookie Consent Pop-up -->
+        </article>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Cookie Toast Notification (SLDS) -->
   @if (showCookiePopup) {
-    <div class="cookie-popup">
-      <div class="cookie-content">
-        <div class="cookie-header">
-          <span class="cookie-icon">🍪</span>
-          <h4>We Value Your Privacy</h4>
+    <div class="slds-notify_container slds-is-fixed" style="bottom: 1rem; top: auto; width: 100%; display: flex; justify-content: center;">
+      <div class="slds-notify slds-notify_toast slds-theme_info" role="status" style="min-width: 400px; max-width: 800px;">
+        <span class="slds-icon_container slds-icon-utility-info slds-m-right_small slds-no-flex slds-align-top">
+          <svg class="slds-icon slds-icon_small" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor">
+             <path d="M440-280h80v-240h-80v240Zm40-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640q0 17 11.5 28.5T480-600Zm0 520q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/>
+          </svg>
+        </span>
+        <div class="slds-notify__content" style="flex: 1;">
+          <h2 class="slds-text-heading_small">We Value Your Privacy</h2>
+          <p>We use cookies to save your settings, analyze retirement tool usage, and personalize wealth projections.</p>
         </div>
-        <p class="cookie-desc">We use cookies to save your settings, analyze retirement tool usage, and personalize wealth projections. Accept to continue with optimized calculations.</p>
-        <div class="cookie-actions">
-          <button class="cookie-btn cookie-decline" (click)="declineCookies()">Decline</button>
-          <button class="cookie-btn cookie-accept" (click)="acceptCookies()">Accept All</button>
+        <div class="slds-notify__close">
+          <button class="slds-button slds-button_neutral slds-m-right_x-small" title="Decline" (click)="declineCookies()">Decline</button>
+          <button class="slds-button slds-button_success" title="Accept" (click)="acceptCookies()">Accept All</button>
         </div>
       </div>
     </div>
