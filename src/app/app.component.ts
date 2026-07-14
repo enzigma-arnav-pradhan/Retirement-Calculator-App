@@ -180,7 +180,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     // Gross up monthly expense to cover withdrawal tax
     const monthlyExpenseAtRetirementGross = monthlyExpenseAtRetirementNet / (1 - retirementTaxSafe / 100);
     const annualExpenseAtRetirementGross = monthlyExpenseAtRetirementGross * 12;
-    
+
     // Core SWR Corpus
     const swrCorpus = annualExpenseAtRetirementGross / (withdrawalRateSafe / 100);
     // Emergency buffer (separately maintained, but added to target corpus goal)
@@ -190,7 +190,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     // 2. Month-by-month cashflow simulation
     let balance = currentCorpusSafe + oneTimeInvestmentSafe;
     let cumContributions = currentCorpusSafe + oneTimeInvestmentSafe;
-    
+
     this.ledger = [];
     const ages: number[] = [];
     const corpusValues: number[] = [];
@@ -286,7 +286,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       let withdrawalsThisYear = 0;
 
       const rMonthlyRet = expectedReturnPostSafe / 1200;
-      
+
       // SWR annual withdrawal inflated to the current retirement year
       const annualWithdrawalThisYear = initialAnnualWithdrawalGross * Math.pow(1 + inflationRateSafe / 100, y - 1);
       const monthlyWithdrawalNeeded = annualWithdrawalThisYear / 12;
@@ -296,12 +296,12 @@ export class AppComponent implements OnInit, AfterViewInit {
           const withdrawal = Math.min(retiredBalance, monthlyWithdrawalNeeded);
           retiredBalance -= withdrawal;
           withdrawalsThisYear += withdrawal;
-          
+
           if (retiredBalance <= 0 && this.depletionAge === -1) {
             this.depletionAge = yearAge;
           }
         }
-        
+
         const interest = retiredBalance * rMonthlyRet;
         retiredBalance += interest;
         growthThisYear += interest;
@@ -365,11 +365,11 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   getTargetCorpusForAccumulationYear(
-    y: number, 
-    cAge: number, 
-    rAge: number, 
-    monthlyExpenseToday: number, 
-    inflation: number, 
+    y: number,
+    cAge: number,
+    rAge: number,
+    monthlyExpenseToday: number,
+    inflation: number,
     withdrawalRate: number
   ): number {
     // Current required corpus if the user retired at this year y
@@ -379,7 +379,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   solveRequiredSIP(initial: number, target: number, nAcc: number, stepUp: number, expectedReturn: number): number {
     if (nAcc <= 0) return 0;
-    
+
     // Check if 0 SIP is already enough
     if (this.simulateAccumulationOnly(initial, 0, nAcc, stepUp, expectedReturn) >= target) {
       return 0;
@@ -475,7 +475,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     const absVal = Math.abs(value);
     const sign = value < 0 ? '-' : '';
     const config = this.currentCountry;
-    
+
     if (config.currency === 'INR') {
       if (absVal >= 10000000) {
         return `${sign}₹ ${(absVal / 10000000).toFixed(2)} Cr`;
