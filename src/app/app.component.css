@@ -34,7 +34,8 @@ canvas {
 .slds-table td,
 .slds-form-element__addon,
 .slds-page-header__title,
-.slds-page-header__name-title {
+.slds-page-header__name-title,
+.slds-section__title {
   color: #080707 !important;
   font-weight: 500;
 }
